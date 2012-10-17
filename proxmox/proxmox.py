@@ -112,6 +112,23 @@ class ConnectorAPI(object):
         except TypeError:
             raise ProxmoxConnectionError("'params' argument is if incorrect type. Should be a dict.")
 
+    def delete(self, filter, params={}):
+        """
+        Performs a PUT request. Assumes that if params is a string it has already
+        been urlencoded and is passed straight through. If it is not a string it will
+        attempt to encode the dict.
+
+        Raises an exception if it is unable to encode params.
+        """
+        url = "{0}/{1}".format(self.baseurl, filter)
+
+        try:
+            urlencoded_params = params if isinstance(params, str) else urllib.urlencode(params)
+            return self.__query('delete', url, urlencoded_params)
+        except TypeError:
+            raise ProxmoxConnectionError("'params' argument is if incorrect type. Should be a dict.")
+
+
     def __query(self, verb, url, post_params=None):
         """
         Performs a HTTP request for blah
@@ -124,6 +141,9 @@ class ConnectorAPI(object):
         if verb == 'put':
             request = urllib2.Request(url, post_params)
             request.get_method = lambda: 'PUT'
+        if verb == 'delete':
+            request = urllib2.Request(url, post_params)
+            request.get_method = lambda: 'DELETE'
 
         headers = {"Accept": "application/json",
                    "CSRFPreventionToken": "%s" % self._auth.CSRFPreventionToken,
