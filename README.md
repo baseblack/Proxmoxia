@@ -33,16 +33,24 @@ for node in connection.fetch('nodes'):
         print "%s. %s => %s" % (vm['vmid'], vm['name'], vm['status'])
 
 >>> 141. puppet-2.london.baseblack.com => running
-   101. munki.london.baseblack.com => running
-   102. redmine.london.baseblack.com => running
-   140. dns-1.london.baseblack.com => running
-   126. ns-3.london.baseblack.com => running
-   113. rabbitmq.london.baseblack.com => running
+    101. munki.london.baseblack.com => running
+    102. redmine.london.baseblack.com => running
+    140. dns-1.london.baseblack.com => running
+    126. ns-3.london.baseblack.com => running
+    113. rabbitmq.london.baseblack.com => running
 ````
 
 ##Class based access
 
 Classes exist for a number of entities within Proxmox. For example, there is a Node class which represents a single node within the cluster. Or an OpenVZ class which represents a single openvz container in the cluster.
+
+###Current list of defined types
+
+* Node
+* OpenVZ
+* Qemu
+* Task
+* ...
 
 ###Dynamic GET methods
 
@@ -56,27 +64,28 @@ These methods are recursive so `proxmox.Node(conn, 'proxmox-7).scan.nfs(server="
 * Connect to a specific node and access end points on it.
 
 ````python
-    node = proxmox.Node(connection, 'proxmox-7')
-    print node.rrd(ds='cpu',timeframe='hour')
-    >>>{u'filename': u'/var/lib/rrdcached/db/pve2-node/proxmox-7.png'}
+node = proxmox.Node(connection, 'proxmox-7')
+print node.rrd(ds='cpu',timeframe='hour')
+>>>{u'filename': u'/var/lib/rrdcached/db/pve2-node/proxmox-7.png'}
 ````
     
 * Create an OpenVZ object for VM with vmid=108 and generate the 'status/current' request.
 
 ````python
-    print node.openvz(108).status.current()
-    >>>{u'status': u'stopped', u'uptime': 0, u'disk': 0, u'maxswap': 536870912, u'name': u'packages.london.baseblack.com', u'diskread': 0, u'diskwrite': 0, u'ip': u'192.168.123.108', u'netin': 0, u'cpus': 1, u'mem': 0, u'failcnt': 0, u'swap': 0, u'nproc': 0, u'netout': 0, u'ha': 0, u'type': u'openvz', u'cpu': 0, u'maxdisk': 4294967296, u'maxmem': 536870912}
+print node.openvz(108).status.current()
+>>>{u'status': u'stopped', u'uptime': 0, u'disk': 0, u'maxswap': 536870912, u'name': u'packages.london.baseblack.com', u'diskread': 0, u'diskwrite': 0, u'ip': u'192.168.123.108', u'netin': 0, u'cpus': 1, u'mem': 0, u'failcnt': 0, u'swap': 0, u'nproc': 0, u'netout': 0, u'ha': 0, u'type': u'openvz', u'cpu': 0, u'maxdisk': 4294967296, u'maxmem': 536870912}
+````
 
-* Create and execution task. Control is returned after the task has completed. *Note: This is presently a blocking call*
+* Create and execution task. Control is returned after the task has completed. **Note: This is presently a blocking call**
 
 ````python
-    status, log = node.openvz(108).start()
+status, log = node.openvz(108).start()
     
-    print status
-    >>>{u'status': u'stopped', u'node': u'proxmox-7', u'pstart': 115470859, u'upid': u'UPID:proxmox-7:00009766:06E1F20B:507853E7:vzstart:108:root@pam:', u'pid': 38758, u'user': u'root@pam', u'starttime': 1350063079, u'type': u'vzstart', u'id': u'108'}
+print status
+>>>{u'status': u'stopped', u'node': u'proxmox-7', u'pstart': 115470859, u'upid': u'UPID:proxmox-7:00009766:06E1F20B:507853E7:vzstart:108:root@pam:', u'pid': 38758, u'user': u'root@pam', u'starttime': 1350063079, u'type': u'vzstart', u'id': u'108'}
     
-    print log
-    >>>[u'Starting container ...', u'Container is mounted', u'Adding IP address(es): 192.168.123.108', u'Setting CPU units: 1000', u'Setting CPUs: 1', u'Container start in progress...', u'TASK OK']
+print log
+>>>[u'Starting container ...', u'Container is mounted', u'Adding IP address(es): 192.168.123.108', u'Setting CPU units: 1000', u'Setting CPUs: 1', u'Container start in progress...', u'TASK OK']
 ````
 
 		
