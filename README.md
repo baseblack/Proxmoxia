@@ -23,18 +23,18 @@ Once you have connected you should use the connection to retrieve an Authenticat
 
 ##Simple query based access
 
-    ````python
-    for node in connection.fetch('nodes'):
-        for vm in connection.fetch('nodes/%s/openvz' % node['node']):
-            print "%s. %s => %s" % (vm['vmid'], vm['name'], vm['status'])
+````python
+for node in connection.fetch('nodes'):
+    for vm in connection.fetch('nodes/%s/openvz' % node['node']):
+        print "%s. %s => %s" % (vm['vmid'], vm['name'], vm['status'])
 
-    >>>141. puppet-2.london.baseblack.com => running
-       101. munki.london.baseblack.com => running
-       102. redmine.london.baseblack.com => running
-       140. dns-1.london.baseblack.com => running
-       126. ns-3.london.baseblack.com => running
-       113. rabbitmq.london.baseblack.com => running
-    ````
+>>> 141. puppet-2.london.baseblack.com => running
+   101. munki.london.baseblack.com => running
+   102. redmine.london.baseblack.com => running
+   140. dns-1.london.baseblack.com => running
+   126. ns-3.london.baseblack.com => running
+   113. rabbitmq.london.baseblack.com => running
+````
 
 ##Class based access
 
