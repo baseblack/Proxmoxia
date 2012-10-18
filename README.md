@@ -92,6 +92,13 @@ Some of the API endpoints require a number of keyword arguments. For these addre
 
     http://SERVER:PORT/api2/json/nodes/proxmox-7/rrd?ds=cpu&timeframe=hour
 
+`node.rrd.post(ds='cpu', timeframe='hour')` would generate a Post request with a url/post fields like this:
+
+    url = http://SERVER:PORT/api2/json/nodes/proxmox-7/rrd?
+    post_fields = ds=cpu&timeframe=hour
+
+Put/Delete requests are the same as posts.
+
 ##Examples:
 
 * Create Proxmox and Node access objects:
