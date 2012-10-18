@@ -20,10 +20,11 @@ __copyright__ = "Baseblack Ltd 2012"
 __license__ = ""
 __version__ = "1.0.0"
 
-LOGGING_LEVEL = logging.INFO
+LOGGING_LEVEL = logging.DEBUG
 logging.basicConfig(format='%(levelname)s:%(funcName)s: %(message)s', level=LOGGING_LEVEL)
 
 
+# Auth token structure and string repr method
 class ProxmoxAuthToken(object):
     """
     Authentication storage class. When called returns the ticket attribute by
@@ -39,11 +40,11 @@ class ProxmoxAuthToken(object):
         return self.ticket
 
 
+# Url handling class
 class ConnectorAPI(object):
     """
     Base transport class. Provides GET/POST/PUT functions for use by child classes.
     """
-
     def __init__(self, hostname, port=8006):
         """
         Sets the Proxmox api URL which is going to be used for all further interaction.
@@ -58,7 +59,7 @@ class ConnectorAPI(object):
 
         logging.debug('API endpoint base url is {baseurl}'.format(**self.__dict__))
 
-    def fetch(self, filter, arguments=None):
+    def get(self, filter, arguments=None):
         """
         Full GET request. Accepts both the filter arg of the simple_fetch but
         also a dict of arguments to be appended to the url.
@@ -133,15 +134,19 @@ class ConnectorAPI(object):
         """
         Performs a HTTP request for blah
         """
-        logging.debug(url)
+        logging.debug('Request url: %s' % url)
+
         if verb == 'get':
             request = urllib2.Request(url)
         if verb == 'post':
+            logging.debug('Request params: %s' % post_params)
             request = urllib2.Request(url, post_params)
         if verb == 'put':
+            logging.debug('Request params: %s' % post_params)
             request = urllib2.Request(url, post_params)
             request.get_method = lambda: 'PUT'
         if verb == 'delete':
+            logging.debug('Request params: %s' % post_params)
             request = urllib2.Request(url, post_params)
             request.get_method = lambda: 'DELETE'
 
@@ -168,8 +173,7 @@ class ConnectorAPI(object):
         return fields['data']
 
 
-
-# Primary connection object
+# Primary connection class
 class Connector(ConnectorAPI):
     """
     Connector Class. This should be the first object which an application creates.
@@ -182,7 +186,7 @@ class Connector(ConnectorAPI):
     def __init__(self, hostname, port=8006):
         ConnectorAPI.__init__(self, hostname, port)
 
-    def fetch_auth_token(self, username, password):
+    def get_auth_token(self, username, password):
         """
         Called with a valid username/password combination. Assumes @pam is provided
         in the username, if required.
@@ -218,20 +222,6 @@ class Connector(ConnectorAPI):
         self._auth = ProxmoxAuthToken(username, ticket, CSRFPreventionToken)
         return self._auth
 
-    def access(self):
-        return self.parameterized_fetch('access', {})
-
-    def cluster(self):
-        return self.parameterized_fetch('cluster', {})
-
-    def nodes(self):
-        return self.parameterized_fetch('nodes', {})
-
-    def pools(self):
-        return self.parameterized_fetch('pools', {})
-
-    def storage(self, **kwargs):
-        return self.fetch('storage', kwargs)
 
 ################################################################################
 #
@@ -251,7 +241,7 @@ class Proxmox(ConnectorAPI):
 
     def __getattr__(self, key):
         """
-        A dynamic GET request is called when no other definition for the requested
+        A dynamic request is called when no other definition for the requested
         method can be found.
         """
         return AttrMethod(self, key)
@@ -279,11 +269,56 @@ class AttrMethod(object):
         Formats the any child attributes as a filter key.
         Example:   myobj.status.current() ==> "status/current"
         """
+
+        key = urllib.quote(key)
+
+        if key == "post":
+            return  AttrPostMethod(self.parent, self.method_name)
+        elif key == "put":
+            return  AttrPutMethod(self.parent, self.method_name)
+        elif key == "delete":
+            return  AttrDeleteMethod(self.parent, self.method_name)
+        elif key == "get":
+            return AttrGetMethod(self.parent, self.method_name)
+
         return AttrMethod(self.parent, '/'.join((self.method_name, key)))
 
-    def __call__(self, **kwargs):
+    def __call__(self, *args, **kwargs):
         """
         Passes on the arguments to the call as a dict of key/values.
         """
-        logging.debug("Generated call for %s/%s" % (self.parent.baseurl, self.method_name))
-        return self.parent.fetch(self.method_name, kwargs)
+        tmp = [self.method_name]
+        tmp.extend(args)
+        self.method_name = '/'.join(tmp)
+
+        if args:
+            logging.debug("Returned new method for %s/%s" % (self.parent.baseurl, self.method_name))
+            return AttrMethod(self.parent, self.method_name)
+
+        logging.debug("Generated CALL for %s/%s" % (self.parent.baseurl, self.method_name))
+        return self.parent.get(self.method_name, kwargs)
+
+class AttrGetMethod(AttrMethod):
+
+    def __call__(self, **kwargs):
+        logging.debug("Generated GET for %s/%s" % (self.parent.baseurl, self.method_name))
+        return self.parent.get(self.method_name, kwargs)
+
+class AttrPostMethod(AttrMethod):
+
+    def __call__(self, **kwargs):
+        logging.debug("Generated POST for %s/%s" % (self.parent.baseurl, self.method_name))
+        return self.parent.post(self.method_name, kwargs)
+
+class AttrPutMethod(AttrMethod):
+
+    def __call__(self, **kwargs):
+        logging.debug("Generated PUT for %s/%s" % (self.parent.baseurl, self.method_name))
+        return self.parent.put(self.method_name, kwargs)
+
+class AttrDeleteMethod(AttrMethod):
+
+    def __call__(self, **kwargs):
+        logging.debug("Generated DELETE for %s/%s" % (self.parent.baseurl, self.method_name))
+        return self.parent.delete(self.method_name, kwargs)
+

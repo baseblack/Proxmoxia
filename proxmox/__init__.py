@@ -8,9 +8,8 @@
 ##################################
 
 # Adding into module namespace.
-from proxmox import Connector
+from proxmox import Connector, Proxmox
 from nodes import Node
-from utils import *
 
 __author__ = "Andrew Bunday"
 __copyright__ = "Baseblack Ltd 2012"
