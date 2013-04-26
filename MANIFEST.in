@@ -1,0 +1,5 @@
+recursive-include examples *
+recursive-include proxmox *
+recursive-include tests *
+include LICENSE *.md
+exclude MANIFEST.in
