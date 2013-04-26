@@ -1,0 +1,6 @@
+syntax: glob
+
+.git
+*.pyc
+.hgignore
+*egg-info
